@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LeetCode Company Wise Questions</title>
+<meta name="description" content="Browse company-wise LeetCode questions. Click any question to open it directly on LeetCode." />
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>" />
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <button id="homeBtn" class="logo" title="Home">🧩 <span>LeetCode <em>Company Wise</em></span></button>
+    <div class="topbar-search">
+      <span class="search-icon">⌕</span>
+      <input id="companySearch" type="text" placeholder="Search companies…  ( press / )" autocomplete="off" />
+    </div>
+    <div class="topbar-meta">
+      <span id="statPill" class="stat-pill">…</span>
+      <a id="srcLink" class="gh-link" href="https://github.com/liquidslr/leetcode-company-wise-problems" target="_blank" rel="noopener">★ Data source</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HOME VIEW -->
+  <section id="homeView">
+    <div class="hero">
+      <h1>Company-wise LeetCode questions</h1>
+      <p>Pick a dataset, pick a company, pick a time range, click any question to open it <strong>directly on LeetCode</strong> in a new tab.</p>
+      <div id="srcTabs" class="tabs src-tabs" role="tablist">
+        <button data-src="v1" role="tab" class="active">📦 June 2025 · 470 companies</button>
+        <button data-src="v2" role="tab">📦 July 2026 · 660 companies</button>
+      </div>
+      <div class="hero-controls">
+        <div class="sort-group">
+          <label for="companySort">Sort</label>
+          <select id="companySort">
+            <option value="questions">Most questions</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </div>
+        <div id="recentWrap" class="recent-wrap" hidden>
+          <span>Recent:</span>
+          <div id="recentList" class="recent-list"></div>
+        </div>
+      </div>
+    </div>
+    <div id="companyGrid" class="company-grid"></div>
+    <p id="companyEmpty" class="empty" hidden>No companies match your search.</p>
+  </section>
+
+  <!-- COMPANY VIEW -->
+  <section id="companyView" hidden>
+    <button id="backBtn" class="back-btn">← All companies</button>
+    <div class="company-header">
+      <div id="companyAvatar" class="company-avatar">G</div>
+      <div>
+        <h2 id="companyName">Google</h2>
+        <p id="companySub" class="muted">…</p>
+      </div>
+    </div>
+
+    <div id="timeTabs" class="tabs" role="tablist">
+      <button data-tf="thirty" role="tab">30 Days</button>
+      <button data-tf="three" role="tab">3 Months</button>
+      <button data-tf="six" role="tab">6 Months</button>
+      <button data-tf="more" role="tab">6M+</button>
+      <button data-tf="all" role="tab" class="active">All</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-search">
+        <span class="search-icon">⌕</span>
+        <input id="problemSearch" type="text" placeholder="Filter questions by title or topic…" autocomplete="off" />
+      </div>
+      <div class="pills" id="diffPills">
+        <button data-diff="ALL" class="active">All</button>
+        <button data-diff="Easy">Easy</button>
+        <button data-diff="Medium">Medium</button>
+        <button data-diff="Hard">Hard</button>
+      </div>
+      <select id="problemSort" title="Sort questions">
+        <option value="freq">Sort: Frequency ↓</option>
+        <option value="accept">Sort: Acceptance ↓</option>
+        <option value="title">Sort: Title A–Z</option>
+        <option value="diff">Sort: Difficulty</option>
+      </select>
+    </div>
+
+    <p id="resultCount" class="muted small"></p>
+    <div id="problemList" class="problem-list"></div>
+    <p id="problemEmpty" class="empty" hidden>No questions match these filters.</p>
+    <p id="loadError" class="error" hidden></p>
+  </section>
+
+  <footer class="footer">
+    <span id="srcFooter">Data: <a href="https://github.com/liquidslr/leetcode-company-wise-problems" target="_blank" rel="noopener">liquidslr/leetcode-company-wise-problems</a> · Updated June 2025 · Clicking a question opens <a href="https://leetcode.com" target="_blank" rel="noopener">leetcode.com</a> directly.</span>
+  </footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
