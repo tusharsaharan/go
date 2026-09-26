@@ -60,6 +60,12 @@ const els = {
   loadError: $("loadError"),
   recentWrap: $("recentWrap"),
   recentList: $("recentList"),
+  profileAvatar: $("profileAvatar"),
+  profileStats: $("profileStats"),
+  profileRefresh: $("profileRefresh"),
+  profileUpdated: $("profileUpdated"),
+  solvesWrap: $("solvesWrap"),
+  solvesList: $("solvesList"),
 };
 
 const TF_KEYS = ["thirty", "three", "six", "more", "all"];
@@ -243,16 +249,21 @@ function renderProblems() {
   const all = currentProblems();
   const list = all.slice(0, 2000);
   els.problemEmpty.hidden = all.length !== 0;
+  const solvedCount = all.filter((p) => isSolved(p)).length;
   els.resultCount.textContent = all.length
-    ? `Showing ${list.length} of ${all.length.toLocaleString()} questions — click any question to open it on LeetCode ↗`
+    ? `Showing ${list.length} of ${all.length.toLocaleString()} questions` +
+      (solvedCount ? ` · ✓ ${solvedCount} solved by you` : "") +
+      ` — click any question to open it on LeetCode ↗`
     : "";
   els.problemList.innerHTML = list.map((p) => {
     const width = Math.max(4, Math.min(100, p.f));
+    const solved = isSolved(p);
+    const solvedTag = solved ? `<span class="solved-tag">✓ Solved</span>` : "";
     return `
-    <div class="problem-row" data-link="${esc(p.l)}" title="Open on LeetCode: ${esc(p.t)}">
+    <div class="problem-row${solved ? " solved" : ""}" data-link="${esc(p.l)}" title="Open on LeetCode: ${esc(p.t)}">
       <span class="badge ${esc(p.d)}">${esc(p.d)}</span>
       <span class="problem-main">
-        <a class="problem-title" href="${esc(p.l)}" target="_blank" rel="noopener">${esc(p.t)} ↗</a>
+        <a class="problem-title" href="${esc(p.l)}" target="_blank" rel="noopener">${esc(p.t)} ↗</a>${solvedTag}
         <div class="problem-meta">${problemSub(p)}</div>
       </span>
       <span class="freq-wrap" title="Frequency: ${esc(p.f)}">
@@ -348,9 +359,111 @@ window.addEventListener("hashchange", () => {
   if (!location.hash) goHome(true);
 });
 
+/* ---- My LeetCode progress (live sync) ----
+   Linked profile: https://leetcode.com/u/tushar__saharan/
+   Data via CORS-friendly proxy API (alfa-leetcode-api). Auto-refreshes every
+   5 minutes, so a question you just solved appears without redeploying.
+   Note: LeetCode's public API only exposes the last ~20 accepted submissions,
+   so we accumulate solved slugs in localStorage over time + always show live totals. */
+const LC_USER = "tushar__saharan";
+const LC_API = "https://alfa-leetcode-api.onrender.com";
+const LC_REFRESH_MS = 5 * 60 * 1000;
+
+function slugFromLink(link) {
+  const m = String(link || "").match(/leetcode\.com\/problems\/([^/?#]+)/i);
+  return m ? m[1].toLowerCase() : "";
+}
+
+function loadSolvedSlugs() {
+  try {
+    const arr = JSON.parse(localStorage.getItem("lcw-solved-slugs") || "[]");
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch { return new Set(); }
+}
+const solvedSlugs = loadSolvedSlugs();
+function saveSolvedSlugs() {
+  try { localStorage.setItem("lcw-solved-slugs", JSON.stringify([...solvedSlugs].slice(0, 5000))); } catch {}
+}
+function isSolved(p) {
+  const slug = slugFromLink(p.l);
+  return slug ? solvedSlugs.has(slug) : false;
+}
+
+async function fetchJson(url, timeoutMs = 25000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } finally { clearTimeout(t); }
+}
+
+let lcRefreshing = false;
+async function refreshLC(manual) {
+  if (lcRefreshing) return;
+  lcRefreshing = true;
+  if (els.profileRefresh) els.profileRefresh.disabled = true;
+  if (manual && els.profileStats) els.profileStats.textContent = "Syncing with LeetCode…";
+  try {
+    const [prof, solv, ac] = await Promise.all([
+      fetchJson(`${LC_API}/${LC_USER}`).catch(() => null),
+      fetchJson(`${LC_API}/${LC_USER}/solved`).catch(() => null),
+      fetchJson(`${LC_API}/${LC_USER}/acSubmission?limit=20`).catch(() => null),
+    ]);
+    if (!prof && !solv && !ac) throw new Error("API unreachable (free tier may be waking up — retry in a minute)");
+
+    // merge recent accepted slugs so new solves stick
+    const subs = (ac && (ac.submission || ac.submissions)) || [];
+    let newOnes = 0;
+    for (const s of subs) {
+      const slug = String(s.titleSlug || slugFromLink(s.url) || "").toLowerCase();
+      if (slug && !solvedSlugs.has(slug)) { solvedSlugs.add(slug); newOnes++; }
+    }
+    if (newOnes) saveSolvedSlugs();
+
+    // profile stats line (live totals always fresh)
+    const parts = [];
+    if (solv && solv.solvedProblem != null) {
+      parts.push(`${Number(solv.solvedProblem).toLocaleString()} solved (E${solv.easySolved ?? 0} M${solv.mediumSolved ?? 0} H${solv.hardSolved ?? 0})`);
+    } else if (prof && prof.submitStatsGlobal) {
+      const a = (prof.submitStatsGlobal.acSubmissionNum || []).find((x) => x.difficulty === "All");
+      if (a) parts.push(`${Number(a.count).toLocaleString()} solved`);
+    }
+    if (prof && prof.ranking) parts.push(`Rank ${Number(prof.ranking).toLocaleString()}`);
+    parts.push(`${solvedSlugs.size} tracked ✓`);
+    if (els.profileStats) els.profileStats.textContent = parts.join(" · ") || "Connected";
+    if (prof && prof.avatar && els.profileAvatar) {
+      els.profileAvatar.innerHTML = `<img src="${esc(prof.avatar)}" alt="" style="width:100%;height:100%;border-radius:12px;object-fit:cover" onerror="this.remove()" />`;
+    }
+
+    // latest solves strip
+    if (subs.length && els.solvesWrap && els.solvesList) {
+      els.solvesWrap.hidden = false;
+      els.solvesList.innerHTML = subs.slice(0, 10).map((s) =>
+        `<a href="https://leetcode.com/problems/${esc(s.titleSlug)}/" target="_blank" rel="noopener" title="Open on LeetCode">✓ ${esc(s.title)}</a>`
+      ).join("");
+    }
+    if (els.profileUpdated) {
+      els.profileUpdated.textContent = "synced " + new Date().toLocaleTimeString() + (newOnes ? ` · +${newOnes} new` : "");
+    }
+    // re-render open company list so fresh solves get ✓ badges immediately
+    if (state.currentData) renderProblems();
+  } catch (e) {
+    if (els.profileStats) els.profileStats.textContent = "LeetCode sync failed — click ↻ Sync to retry (" + e.message + ")";
+  } finally {
+    lcRefreshing = false;
+    if (els.profileRefresh) els.profileRefresh.disabled = false;
+  }
+}
+
+if (els.profileRefresh) els.profileRefresh.addEventListener("click", () => refreshLC(true));
+setInterval(() => refreshLC(false), LC_REFRESH_MS);
+
 (async function boot() {
   const m = location.hash.match(/^#\/(v1|v2)\//);
   const startSrc = m ? m[1] : state.src;
+  refreshLC(false); // live profile sync (non-blocking)
   try {
     await loadSource(startSrc);
   } catch (e) {

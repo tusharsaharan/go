@@ -159,6 +159,38 @@ select {
 .footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px; }
 .footer a { color: var(--text); }
 
+/* LeetCode profile sync */
+.profile-card {
+  display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  background: linear-gradient(180deg, var(--card), var(--bg2));
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.profile-id { display: flex; gap: 12px; align-items: center; text-decoration: none; color: var(--text); }
+.profile-avatar {
+  width: 44px; height: 44px; border-radius: 12px; flex: none;
+  display: grid; place-items: center; font-weight: 800; font-size: 19px; color: #0f1115;
+  background: linear-gradient(135deg, #00b8a3, var(--accent2));
+}
+.profile-id strong { font-size: 15px; }
+.profile-stats { display: block; margin-top: 3px; }
+.profile-side { display: flex; gap: 10px; align-items: center; }
+.profile-refresh { margin: 0; }
+.solves-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.solves-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.solves-list a {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 999px; padding: 5px 10px; font-size: 12px; text-decoration: none;
+  max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.solves-list a:hover { border-color: var(--easy); }
+.solved-tag {
+  display: inline-block; font-size: 11px; font-weight: 800; color: var(--easy);
+  background: rgba(0,184,163,.12); border: 1px solid rgba(0,184,163,.4);
+  border-radius: 999px; padding: 2px 8px; margin-left: 8px; vertical-align: middle;
+}
+.problem-row.solved { border-color: rgba(0,184,163,.45); }
+
 @media (max-width: 640px) {
   .topbar-inner { flex-wrap: wrap; }
   .topbar-search { order: 3; flex-basis: 100%; }
